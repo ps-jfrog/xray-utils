@@ -197,6 +197,10 @@ jf plugin publish xray-utils v0.1.0
 
 This builds the plugin for all supported operating systems and uploads the binaries to your private registry. Users can then install it with `jf plugin install xray-utils` (and optionally `@version`) as long as their JFrog CLI is configured to use that private plugins server (via **JFROG_CLI_PLUGINS_SERVER**).
 
+## License
+
+This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for the full text.
+
 ## Additional info
 
 None.
