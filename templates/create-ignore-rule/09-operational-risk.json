@@ -1,0 +1,7 @@
+{
+  "notes": "Ignore findings by operational risk (e.g. any)",
+  "expires_at": "2025-12-31T23:59:59Z",
+  "ignore_filters": {
+    "operational_risk": ["any"]
+  }
+}

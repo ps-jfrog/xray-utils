@@ -1,0 +1,7 @@
+{
+  "notes": "Ignore vulnerabilities by name for known false positives",
+  "expires_at": "2025-06-30T23:59:59Z",
+  "ignore_filters": {
+    "vulnerabilities": ["vuln-id-1", "vuln-id-2"]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "notes": "Ignore violations for a specific artifact (path must end with /)",
+  "expires_at": "2025-12-31T23:59:59Z",
+  "ignore_filters": {
+    "artifacts": [
+      {
+        "name": "my-artifact",
+        "version": "2.0.0",
+        "path": "repo-name/path/to/artifact/"
+      }
+    ]
+  }
+}

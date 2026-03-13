@@ -1,0 +1,12 @@
+{
+  "notes": "Ignore violations for a specific component name and version",
+  "expires_at": "2025-12-31T23:59:59Z",
+  "ignore_filters": {
+    "components": [
+      {
+        "name": "example-package",
+        "version": "1.0.0"
+      }
+    ]
+  }
+}

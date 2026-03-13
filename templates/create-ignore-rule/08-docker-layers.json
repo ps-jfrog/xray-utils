@@ -1,0 +1,10 @@
+{
+  "notes": "Ignore violations in specific Docker layer SHAs",
+  "expires_at": "2025-12-31T23:59:59Z",
+  "ignore_filters": {
+    "docker_layers": [
+      "sha256:abc123...",
+      "sha256:def456..."
+    ]
+  }
+}

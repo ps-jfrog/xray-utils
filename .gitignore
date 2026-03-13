@@ -211,3 +211,6 @@ xray-utils
 *.exe
 *.test
 vendor/
+
+# Ignore rule drafts and test data (user-curated combined JSON)
+test/

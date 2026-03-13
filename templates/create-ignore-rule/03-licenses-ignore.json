@@ -1,0 +1,7 @@
+{
+  "notes": "Ignore specific licenses in internal projects",
+  "expires_at": "2025-12-31T23:59:59Z",
+  "ignore_filters": {
+    "licenses": ["License-A", "License-B"]
+  }
+}

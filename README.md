@@ -54,6 +54,25 @@ Sets the priority for a license name by sending a POST request to the Xray API e
   $ jf xray-utils slp "Apache-2.0" 2
   ```
 
+#### create-ignore-rule (alias: cir)
+
+Creates an Xray ignore rule by sending a POST request to the Xray API with a JSON body. The request body is read from a file. See the [Create Ignore Rule API](https://jfrog.com/help/r/xray-rest-apis/create-ignore-rule) for the full schema.
+
+- **Arguments:**
+  - **json-file** – Path to a JSON file that contains the ignore rule payload (request body). Must include a `notes` field and at least one filter (e.g. `cves`, `vulnerabilities`, `licenses`, `component`, `artifact`, `build`, `docker_layers`).
+
+- **Flags:**
+  - **--server-id** – (Optional) Server ID from JFrog CLI config.
+
+- **Examples:**
+
+  ```bash
+  $ jf xray-utils create-ignore-rule templates/create-ignore-rule/01-cve-ignore.json
+  $ jf xray-utils cir path/to/my-rule.json --server-id my-server
+  ```
+
+  Sample JSON templates are in `templates/create-ignore-rule/` (see `templates/create-ignore-rule/README.md` for field reference). To curate your own combined rule, use the `test/` directory (gitignored); see `test/README.md`.
+
 ### Configuration and environment variables
 
 The plugin resolves the JFrog URL and access token in this order:
@@ -74,6 +93,8 @@ go build -o xray-utils .
 The resulting binary can be used as a JFrog CLI plugin when placed in the JFrog CLI plugins directory.
 
 ## Building an executable for testing
+
+### Build and install the plugin
 
 To build and test the plugin locally with JFrog CLI before publishing:
 
@@ -96,10 +117,11 @@ To build and test the plugin locally with JFrog CLI before publishing:
    jf
    ```
 
-   You should see `xray-utils` listed. Then run the plugin:
+   You should see `xray-utils` listed. Then run any plugin command, for example:
 
    ```bash
    jf xray-utils set-license-priority "MIT" 1
+   jf xray-utils create-ignore-rule test/combined-ignore-rule.json
    ```
 
 **Tip: avoid copying after every build** — Use a symlink so `jf` always runs the binary in your project directory. After the first build, run:
@@ -108,10 +130,24 @@ To build and test the plugin locally with JFrog CLI before publishing:
 ln -sf "$(pwd)/xray-utils" ~/.jfrog/plugins/xray-utils/bin/xray-utils
 ```
 
-Then you only need to run `go build -o xray-utils .` when you change code; no need to copy the binary again. You can also run the plugin without installing via `jf` by using:
+Then you only need to run `go build -o xray-utils .` when you change code; no need to copy the binary again.
+
+### Run without building (go run)
+
+You can run the plugin without building or installing it by using `go run . -- <command> ...`. Different commands correspond to different plugin functions: use **set-license-priority** for license priorities and **create-ignore-rule** for creating ignore rules from a JSON file.
+
+**Set license priority:**
 
 ```bash
 go run . -- set-license-priority "MIT" 1
+go run . -- set-license-priority "Apache-2.0" 2 --server-id my-server
+```
+
+**Create ignore rule:**
+
+```bash
+go run . -- create-ignore-rule path/to/rule.json
+go run . -- create-ignore-rule test/combined-ignore-rule.json --server-id my-server
 ```
 
 ## Publishing to a private registry

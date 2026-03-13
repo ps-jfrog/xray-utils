@@ -1,0 +1,14 @@
+{
+  "notes": "path /etc/envoy/req.sw.envoy.admin-localhost.yaml",
+  "ignore_filters": {
+    "exposures": {
+      "categories": [
+        "secrets",
+        "services"
+      ],
+      "file_path": [
+        "/etc/envoy/req.sw.envoy.admin-localhost.yaml"
+      ]
+    }
+  }
+}
