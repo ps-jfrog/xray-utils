@@ -1,20 +1,20 @@
 package commands
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 
 	"github.com/jfrog/jfrog-cli-core/v2/plugins/common"
 	"github.com/jfrog/jfrog-cli-core/v2/plugins/components"
+	clientutils "github.com/jfrog/jfrog-client-go/utils"
+	"github.com/jfrog/jfrog-client-go/utils/errorutils"
 	"github.com/jfrog/jfrog-client-go/utils/log"
 )
 
-const ignoreRulesPath = "/xray/api/v1/ignore_rules"
+const ignoreRulesAPI = "api/v1/ignore_rules"
 
 func GetCreateIgnoreRuleCommand() components.Command {
 	return components.Command{
@@ -58,44 +58,37 @@ func createIgnoreRuleCmd(c *components.Context) error {
 		return fmt.Errorf("failed to read JSON file %q: %w", jsonPath, err)
 	}
 
-	// Validate JSON and required keys
 	if err := validateIgnoreRuleJSON(bodyBytes); err != nil {
 		return err
 	}
 
-	baseURL, authHeader, err := getBaseURLAndToken(c)
+	xrayManager, err := createXrayManager(c)
 	if err != nil {
 		return err
 	}
 
-	url := baseURL + ignoreRulesPath
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(bodyBytes))
+	xrayDetails := xrayManager.Config().GetServiceDetails()
+	httpDetails := xrayDetails.CreateHttpClientDetails()
+	httpDetails.SetContentTypeApplicationJson()
+
+	url := clientutils.AddTrailingSlashIfNeeded(xrayDetails.GetUrl()) + ignoreRulesAPI
+
+	resp, body, err := xrayManager.Client().SendPost(url, bodyBytes, &httpDetails)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return err
 	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", authHeader)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	respBody, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(respBody))
+	if err = errorutils.CheckResponseStatusWithBody(resp, body, http.StatusCreated); err != nil {
+		return err
 	}
 
 	log.Info("Successfully created ignore rule.")
+	log.Debug("Response: " + string(body))
 	return nil
 }
 
-// validateIgnoreRuleJSON checks that the body is valid JSON and matches the Xray Create Ignore Rule schema.
-// Request body must have top-level "notes" and "ignore_filters" (all filter criteria inside ignore_filters).
-// See https://jfrog.com/help/r/xray-rest-apis/create-ignore-rule
+// validateIgnoreRuleJSON performs a lightweight pre-flight check on the JSON
+// payload before sending it to the Xray API, giving users clearer errors for
+// common mistakes (missing notes, empty filters).
 func validateIgnoreRuleJSON(body []byte) error {
 	var m map[string]interface{}
 	if err := json.Unmarshal(body, &m); err != nil {
@@ -108,16 +101,10 @@ func validateIgnoreRuleJSON(body []byte) error {
 	if !ok || filters == nil {
 		return errors.New("JSON must contain an \"ignore_filters\" object (required by Xray API)")
 	}
-	filterKeys := []string{"vulnerabilities", "cves", "licenses", "components", "builds", "artifacts", "docker_layers", "release_bundles", "operational_risk", "exposures", "watches", "policies"}
-	hasFilter := false
-	for _, k := range filterKeys {
-		if v, ok := filters[k]; ok && v != nil {
-			hasFilter = true
-			break
+	for _, v := range filters {
+		if v != nil {
+			return nil
 		}
 	}
-	if !hasFilter {
-		return errors.New("ignore_filters must contain at least one criterion (e.g. cves, vulnerabilities, licenses, components, builds, artifacts, docker_layers)")
-	}
-	return nil
+	return errors.New("ignore_filters must contain at least one criterion (e.g. cves, vulnerabilities, licenses, components)")
 }
